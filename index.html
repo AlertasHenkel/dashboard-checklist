@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dashboard Check List Visitas — Henkel Colombiana (v3)</title>
+<title>Dashboard Check List Visitas — Henkel Colombiana (v4)</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
@@ -233,6 +233,15 @@ main { padding:24px 32px; }
 .pill.info { background: var(--info-dim); color: var(--info); }
 .pill.na { background: var(--surface-2); color: var(--text-muted); }
 
+.c360-panel { margin-top:6px; }
+.c360-head { display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; padding-bottom:12px; border-bottom:1px solid var(--border); }
+.c360-name { font-size:1.15rem; font-weight:700; }
+.c360-stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:12px; margin-top:14px; }
+.c360-stats > div { background:var(--surface-2); border:1px solid var(--border); border-radius:10px; padding:10px 14px; }
+.c360-stats span { display:block; font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em; margin-bottom:4px; }
+.c360-stats b { font-size:1.1rem; }
+.c360-ejes { display:flex; flex-wrap:wrap; gap:14px; font-size:0.88rem; align-items:center; }
+.c360-ejes > div { display:flex; align-items:center; gap:6px; background:var(--surface-2); border:1px solid var(--border); border-radius:10px; padding:8px 12px; }
 .incidence-banner {
   background: var(--purple-dim); border:1px solid rgba(167,139,250,0.3);
   border-radius:12px; padding:14px 20px; margin-bottom:20px; display:none;
@@ -259,7 +268,7 @@ footer {
 <div id="upload-overlay">
   <div class="upload-box" id="drop-zone">
     <div style="font-size:3rem; margin-bottom:16px;">📊</div>
-    <h2>Dashboard Check List Visitas — v3</h2>
+    <h2>Dashboard Check List Visitas — v4</h2>
     <p>Arrastra tu archivo Excel aquí o haz clic para seleccionar.<br>
     <span style="color:var(--accent);">Estructura requerida:</span> Title, Nombre colaborador, Cedula, Uniforme al dia, Equipo Celular, Capacitación Portafolio, Capacitacitación SGI, Speech de Ventas Claros, Observaciones Generales, Tome Foto, Fecha</p>
     <button class="upload-btn" onclick="document.getElementById('file-input').click()">Seleccionar archivo .xlsx</button>
@@ -319,13 +328,48 @@ footer {
 
     <div class="kpi-row" id="kpi-row"></div>
 
+    <div class="table-section">
+      <h3>🔎 Segmentador de Colaborador — Estado Actual</h3>
+      <div class="table-controls">
+        <input type="text" id="colab-search" list="colab-list" placeholder="Busca por cédula o nombre y selecciona…" autocomplete="off">
+        <datalist id="colab-list"></datalist>
+      </div>
+      <div id="colab-360" class="c360-panel"></div>
+    </div>
+
     <div class="alerts-panel">
       <h3>⚠️ Alertas Críticas</h3>
       <div class="alert-grid" id="alert-grid"></div>
     </div>
 
+    <div class="table-section">
+      <h3>🔧 Estado de Equipos — Acción Inmediata</h3>
+      <div class="table-controls" style="align-items:center;">
+        <input type="text" id="equipos-search" placeholder="Buscar equipo por cédula o nombre…" autocomplete="off">
+        <div id="equipos-resumen" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
+      </div>
+      <div class="table-wrapper" style="max-height:360px;">
+        <table class="data-table">
+          <thead><tr><th>Colaborador</th><th>Cédula</th><th>Coordinador</th><th>Estado Equipo</th><th>Última Visita</th><th>Detalle / Falla</th></tr></thead>
+          <tbody id="equipos-body"></tbody>
+        </table>
+      </div>
+      <div style="font-size:0.75rem;color:var(--text-muted);margin-top:8px;">Criterio (última visita): 🔴 Sin equipo → escalar de inmediato · 🟠 Falla reportada → gestionar con el área · 🟢 Operativo.</div>
+    </div>
+
+    <div class="table-section">
+      <h3 id="cobertura-title">📆 Cobertura por Coordinador</h3>
+      <div class="table-wrapper" style="max-height:340px;">
+        <table class="data-table">
+          <thead><tr><th>Coordinador</th><th>Equipo (histórico)</th><th>Evaluados en el mes</th><th>% Cobertura</th><th>Pendientes</th><th>Colaboradores sin evaluar</th></tr></thead>
+          <tbody id="cobertura-body"></tbody>
+        </table>
+      </div>
+      <div style="font-size:0.75rem;color:var(--text-muted);margin-top:8px;">Meta: cada coordinador debe evaluar el 100% de su equipo en el mes. "Equipo (histórico)" = colaboradores asociados al coordinador en toda la base (proxy sin maestro de nómina).</div>
+    </div>
+
     <div class="alerts-panel" id="dq-panel" style="display:none;">
-      <h3>🧪 Calidad de Datos</h3>
+      <h3>🧪 Calidad de Datos y Homologación</h3>
       <div class="alert-grid" id="dq-grid"></div>
     </div>
 
@@ -400,7 +444,7 @@ footer {
     </div>
   </main>
 
-  <footer>Dashboard Check List Visitas v3 — EFICACIA S.A.S. / Henkel Colombiana — Conteo por cédula · mes homologado · dedup · capacitación desglosada</footer>
+  <footer>Dashboard Check List Visitas v4 — EFICACIA S.A.S. / Henkel Colombiana — Conteo por cédula · homologación nombre/cédula · segmentador · estado de equipos · cobertura por coordinador</footer>
 </div>
 
 <script>
@@ -491,6 +535,23 @@ function splitMulti(v) {
   return v.toString().split(/;#|;/).map(s=>s.trim()).filter(s=>s.length && s!=='#');
 }
 
+/* ---------- Homologación: normalización de nombre y typos de cédula ---------- */
+function normName(s) {
+  if (s===null||s===undefined) return '';
+  return s.toString().trim().toUpperCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/[^A-Z0-9 ]/g,' ').replace(/\s+/g,' ').trim();
+}
+// true si a y b difieren en 1 sola edición (typo de cédula): 1 sustitución o 1 inserción/borrado
+function typoCedula(a, b) {
+  if (a===b) return false;
+  if (Math.abs(a.length-b.length) > 1) return false;
+  if (a.length === b.length) { let diff=0; for(let i=0;i<a.length;i++) if(a[i]!==b[i]&&++diff>1) return false; return diff===1; }
+  const [s,l] = a.length<b.length ? [a,b] : [b,a];
+  for (let i=0,j=0,skip=0; j<l.length; j++) { if(s[i]===l[j]) i++; else if(++skip>1) return false; }
+  return true;
+}
+
 /* ---------- Detección de incidencias por observación (contexto) ---------- */
 function matchInc(d, t) {
   switch(t) {
@@ -547,23 +608,59 @@ function parseData(rows) {
     seen.add(k); return true;
   });
 
-  // 3) validación de mes: año dominante -> marcar sospechosos
+  // guardar valores crudos antes de homologar
+  recs.forEach(d=>{ d.cedulaRaw=d.cedula; d.nombreRaw=d.colaborador; d.nombreN=normName(d.colaborador); });
+
+  // 3a) HOMOLOGAR CÉDULA por typo: mismo nombre con cédulas casi idénticas -> cédula canónica
+  const cedFreq = {}; recs.forEach(d=>{ cedFreq[d.cedula]=(cedFreq[d.cedula]||0)+1; });
+  const cedToNames = {}; recs.forEach(d=>{ (cedToNames[d.cedula]=cedToNames[d.cedula]||new Set()).add(d.nombreN); });
+  const nameToCeds = {}; recs.forEach(d=>{ (nameToCeds[d.nombreN]=nameToCeds[d.nombreN]||new Set()).add(d.cedula); });
+  const cedMap = {};                 // cédula cruda -> cédula canónica
+  const homologacionesCed = [];      // registro de merges para el panel
+  Object.entries(nameToCeds).forEach(([nom, set]) => {
+    const ceds = [...set];
+    if (ceds.length < 2 || !nom) return;
+    // canónica = la más frecuente; empate -> la más corta (los typos suelen agregar dígitos)
+    const canon = ceds.slice().sort((a,b)=> (cedFreq[b]-cedFreq[a]) || (a.length-b.length) || a.localeCompare(b))[0];
+    ceds.forEach(c=>{
+      if (c===canon) return;
+      const compartida = cedToNames[c].size > 1;        // esa cédula la usa otro nombre -> NO fusionar
+      if (typoCedula(c, canon) && !compartida) {
+        cedMap[c] = canon;
+        homologacionesCed.push({ nombre: nom, de: c, a: canon });
+      }
+    });
+  });
+  recs.forEach(d=>{ if (cedMap[d.cedula]) d.cedula = cedMap[d.cedula]; });
+
+  // 3b) HOMOLOGAR NOMBRE por cédula: nombre canónico = variante más frecuente (empate -> más larga/completa)
+  const nombresPorCed = {};
+  recs.forEach(d=>{ const m=nombresPorCed[d.cedula]=nombresPorCed[d.cedula]||{}; m[d.nombreRaw]=(m[d.nombreRaw]||0)+1; });
+  const nombreCanon = {};            // cédula -> nombre canónico (con su casing original)
+  const conflictosNombre = [];       // cédula con primeros nombres distintos -> revisar
+  Object.entries(nombresPorCed).forEach(([ced, m]) => {
+    const variantes = Object.keys(m);
+    const canon = variantes.slice().sort((a,b)=> (m[b]-m[a]) || (b.length-a.length))[0];
+    nombreCanon[ced] = canon;
+    const primerNombre = v => normName(v).split(' ')[0];
+    const distintos = new Set(variantes.map(primerNombre));
+    if (distintos.size > 1) conflictosNombre.push({ cedula: ced, variantes });
+  });
+  recs.forEach(d=>{ d.colaborador = nombreCanon[d.cedula] || d.colaborador; d.nombreN = normName(d.colaborador); });
+
+  // 4) validación de mes: año dominante -> marcar sospechosos
   const yearCount = {};
   recs.forEach(d=>{ if(d.anio) yearCount[d.anio]=(yearCount[d.anio]||0)+1; });
   const modalYear = Object.keys(yearCount).sort((a,b)=>yearCount[b]-yearCount[a])[0];
   const my = modalYear ? parseInt(modalYear) : new Date().getFullYear();
   recs.forEach(d=>{ d.fechaSospechosa = !d.fechaValida || d.anio < my-1 || d.anio > my+1; });
 
-  // 4) resumen de calidad
-  const cedNames = {};
-  recs.forEach(d=>{ (cedNames[d.cedula]=cedNames[d.cedula]||new Set()).add(d.colaborador.toUpperCase()); });
-  const cedMultiNombre = Object.entries(cedNames).filter(([_,s])=>s.size>1);
   DQ = {
     duplicados: dups,
     sospechosas: recs.filter(d=>d.fechaSospechosa),
     modalYear: my,
-    cedMultiNombre: cedMultiNombre.length,
-    cedMultiEjemplos: cedMultiNombre.slice(0,4).map(([c,s])=>`${c}: ${[...s].join(' / ')}`),
+    homologacionesCed,
+    conflictosNombre,
   };
   return recs;
 }
@@ -651,7 +748,10 @@ function renderDataQuality() {
   items.push({t: DQ.duplicados>0?'warning':'ok', i:'🧬', h:`${DQ.duplicados} filas duplicadas depuradas`, d:'Se conservó una por combinación cédula+fecha+checklist.'});
   const nSusp=(DQ.sospechosas||[]).length;
   items.push({t: nSusp>0?'warning':'ok', i:'📅', h:`${nSusp} fecha(s) fuera de rango`, d: nSusp>0 ? `Año dominante ${DQ.modalYear}. Revisar: ${DQ.sospechosas.map(d=>`${d.colaborador} (${fmtDate(d.fecha)})`).join(', ')}` : `Todas dentro de ${DQ.modalYear}.`});
-  items.push({t: DQ.cedMultiNombre>0?'critical':'ok', i:'🆔', h:`${DQ.cedMultiNombre} cédulas con más de un nombre`, d: DQ.cedMultiNombre>0 ? `Posible captura errónea. Ej: ${DQ.cedMultiEjemplos.join(' | ')}` : 'Consistencia cédula-nombre correcta.'});
+  const nHom=(DQ.homologacionesCed||[]).length;
+  items.push({t: nHom>0?'info':'ok', i:'🔗', h:`${nHom} cédula(s) homologadas por typo`, d: nHom>0 ? DQ.homologacionesCed.map(h=>`${h.nombre}: ${h.de} → ${h.a}`).join(' | ') : 'Sin cédulas mal digitadas detectadas.'});
+  const nConf=(DQ.conflictosNombre||[]).length;
+  items.push({t: nConf>0?'critical':'ok', i:'🆔', h:`${nConf} cédula(s) con nombres distintos — revisar en origen`, d: nConf>0 ? DQ.conflictosNombre.slice(0,6).map(c=>`${c.cedula}: ${c.variantes.join(' / ')}`).join(' | ')+(nConf>6?` … (+${nConf-6})`:'') : 'Consistencia cédula-nombre correcta.'});
   grid.innerHTML = items.map(x=>`
     <div class="alert-item ${x.t}">
       <div class="alert-icon">${x.i}</div>
@@ -688,6 +788,131 @@ function renderReincidencia(data) {
     <td><span class="pill bad">${r.falla}</span></td><td class="mono">${r.veces}</td>
     <td title="${r.fechas}" style="max-width:260px;overflow:hidden;text-overflow:ellipsis;">${r.fechas}</td>
   </tr>`).join('') : '<tr><td colspan="6" style="text-align:center;color:var(--accent);padding:20px;">Sin reincidencia en este filtro.</td></tr>';
+}
+
+/* ---------- Estado del equipo (celular) — criterio de acción ---------- */
+function estadoEquipo(d) {
+  if (!d) return {n:'⚪ Sin dato', cls:'na', prio:3};
+  if (d.celular==='NO') return {n:'🔴 Sin equipo', cls:'bad', prio:0};
+  if (d.fCel)           return {n:'🟠 Falla reportada', cls:'warn', prio:1};
+  if (d.celular==='SI') return {n:'🟢 Operativo', cls:'ok', prio:2};
+  return {n:'⚪ Sin dato', cls:'na', prio:3};
+}
+function ultimaPorCedula(data) {
+  const m = {};
+  data.forEach(d=>{ if(!m[d.cedula] || (d.fecha>m[d.cedula].fecha)) m[d.cedula]=d; });
+  return m;
+}
+
+/* ---------- Segmentador / ficha 360 del colaborador (usa historia completa) ---------- */
+function populateColabList() {
+  const ult = ultimaPorCedula(RAW_DATA);
+  const opts = Object.values(ult).sort((a,b)=>a.colaborador.localeCompare(b.colaborador))
+    .map(d=>`<option value="${d.cedula}">${d.colaborador} — ${d.cedula}</option>`).join('');
+  document.getElementById('colab-list').innerHTML = opts;
+}
+function renderColaborador360() {
+  const q = (document.getElementById('colab-search').value||'').trim().toLowerCase();
+  const panel = document.getElementById('colab-360');
+  if (!q) { panel.innerHTML = '<div style="color:var(--text-muted);padding:8px;">Escribe o selecciona una cédula/nombre para ver la ficha del colaborador.</div>'; return; }
+  let hist = RAW_DATA.filter(d=>d.cedula===q);
+  if (!hist.length) hist = RAW_DATA.filter(d=>d.colaborador.toLowerCase().includes(q) || d.cedula.includes(q));
+  if (!hist.length) { panel.innerHTML = '<div style="color:var(--danger);padding:8px;">Sin coincidencias.</div>'; return; }
+  const ced = hist[0].cedula;
+  hist = RAW_DATA.filter(d=>d.cedula===ced).sort((a,b)=>b.fecha-a.fecha);
+  const last = hist[0];
+  const eq = estadoEquipo(last);
+  const coords = [...new Set(hist.map(d=>d.supervisor))].join(', ');
+  const capTemas = [...new Set(hist.flatMap(d=>[...d.capPortItems,...d.capSGIItems]))];
+  const pill = (ok,txtOK,txtNO)=> ok==='SI'?`<span class="pill ok">${txtOK}</span>`:ok==='NO'?`<span class="pill bad">${txtNO}</span>`:'<span class="pill na">—</span>';
+  const cntFalla = k => hist.filter(k).length;
+
+  panel.innerHTML = `
+    <div class="c360-head">
+      <div><div class="c360-name">${last.colaborador}</div><div class="mono" style="color:var(--text-muted);font-size:0.8rem;">CC ${ced} · ${coords}</div></div>
+      <div class="pill ${eq.cls}" style="font-size:0.9rem;padding:6px 14px;">Equipo: ${eq.n}</div>
+    </div>
+    <div class="c360-stats">
+      <div><span>Visitas</span><b class="mono">${hist.length}</b></div>
+      <div><span>Primera</span><b class="mono">${fmtDate(hist[hist.length-1].fecha)}</b></div>
+      <div><span>Última</span><b class="mono">${fmtDate(last.fecha)}</b></div>
+      <div><span>Capacitaciones</span><b class="mono">${hist.reduce((a,d)=>a+d.nCap,0)}</b></div>
+    </div>
+    <div style="margin:14px 0 8px;font-size:0.75rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;">Ejes — última visita (${fmtDate(last.fecha)})</div>
+    <div class="c360-ejes">
+      <div>👔 Uniforme ${pill(last.uniforme,'Al día','No')}</div>
+      <div>📱 Celular ${pill(last.celular,'OK','Sin equipo')}</div>
+      <div>🗣️ Speech ${pill(last.speech,'Claro','No claro')}</div>
+      <div>📚 Portafolio ${last.capPortItems.length?`<span class="pill info">${last.capPortItems.length} tema(s)</span>`:'<span class="pill na">—</span>'}</div>
+      <div>💻 Cap. SGI ${last.capSGIItems.length?`<span class="pill info">${last.capSGIItems.length} tema(s)</span>`:'<span class="pill na">—</span>'}</div>
+    </div>
+    ${capTemas.length?`<div style="margin-top:10px;font-size:0.8rem;color:var(--text-muted);">🎓 Temas capacitados (histórico): ${capTemas.join(' · ')}</div>`:''}
+    <div style="margin-top:6px;font-size:0.8rem;">
+      ${cntFalla(d=>d.celular==='NO'||d.fCel)>=2?`<span class="pill bad">⚠ Reincidente equipo (${cntFalla(d=>d.celular==='NO'||d.fCel)})</span> `:''}
+      ${cntFalla(d=>d.uniforme==='NO')>=2?`<span class="pill warn">⚠ Reincidente uniforme (${cntFalla(d=>d.uniforme==='NO')})</span> `:''}
+      ${cntFalla(d=>d.speech==='NO')>=2?`<span class="pill info">⚠ Reincidente speech (${cntFalla(d=>d.speech==='NO')})</span> `:''}
+    </div>
+    <div class="table-wrapper" style="max-height:220px;margin-top:14px;">
+      <table class="data-table"><thead><tr><th>Fecha</th><th>Coordinador</th><th>Unif.</th><th>Cel.</th><th>Speech</th><th>Cap.</th><th>Observaciones</th></tr></thead>
+      <tbody>${hist.map(d=>`<tr>
+        <td class="mono">${fmtDate(d.fecha)}</td><td>${d.supervisor}</td>
+        <td>${pill(d.uniforme,'SI','NO')}</td><td>${pill(d.celular,'SI','NO')}</td><td>${pill(d.speech,'SI','NO')}</td>
+        <td>${d.nCap||'—'}</td>
+        <td title="${d.observaciones}" style="max-width:260px;overflow:hidden;text-overflow:ellipsis;">${d.observaciones||'—'}</td>
+      </tr>`).join('')}</tbody></table>
+    </div>`;
+}
+
+/* ---------- Estado de Equipos — acción inmediata (última visita por colaborador) ---------- */
+function renderEquipos() {
+  const sup = document.getElementById('filter-supervisor').value;
+  const q = (document.getElementById('equipos-search').value||'').trim().toLowerCase();
+  let base = RAW_DATA; if (sup) base = base.filter(d=>d.supervisor===sup);
+  let rows = Object.values(ultimaPorCedula(base)).map(d=>({d, e:estadoEquipo(d)}));
+  const nRojo=rows.filter(r=>r.e.prio===0).length, nNaranja=rows.filter(r=>r.e.prio===1).length, nOk=rows.filter(r=>r.e.prio===2).length;
+  if (q) rows = rows.filter(r=>r.d.colaborador.toLowerCase().includes(q)||r.d.cedula.includes(q));
+  rows.sort((a,b)=> a.e.prio-b.e.prio || (b.d.fecha-a.d.fecha));
+  document.getElementById('equipos-resumen').innerHTML =
+    `<span class="pill bad">🔴 ${nRojo} sin equipo</span> <span class="pill warn">🟠 ${nNaranja} con falla</span> <span class="pill ok">🟢 ${nOk} operativos</span>`;
+  document.getElementById('equipos-body').innerHTML = rows.length ? rows.map(r=>`<tr>
+    <td>${r.d.colaborador}</td><td class="mono">${r.d.cedula}</td><td>${r.d.supervisor}</td>
+    <td><span class="pill ${r.e.cls}">${r.e.n}</span></td><td class="mono">${fmtDate(r.d.fecha)}</td>
+    <td title="${r.d.observaciones}" style="max-width:300px;overflow:hidden;text-overflow:ellipsis;">${(r.e.prio<2 ? (r.d.observaciones||'Requiere gestión con el área.') : '—')}</td>
+  </tr>`).join('') : '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:20px;">Sin resultados.</td></tr>';
+}
+
+/* ---------- Cobertura por Coordinador (evaluar todo el equipo en el mes) ---------- */
+function renderCobertura() {
+  const supSel = document.getElementById('filter-supervisor').value;
+  let mes = document.getElementById('filter-mes').value;
+  const mesesValidos = [...new Set(RAW_DATA.filter(d=>d.fechaValida&&!d.fechaSospechosa).map(d=>d.monthKey))].sort();
+  if (!mes) mes = mesesValidos[mesesValidos.length-1] || '';
+  const mesLabel = (RAW_DATA.find(d=>d.monthKey===mes)||{}).monthLabel || '—';
+  document.getElementById('cobertura-title').textContent = `📆 Cobertura por Coordinador — ${mesLabel} (equipo evaluado en el mes)`;
+
+  // roster histórico por coordinador y evaluados en el mes objetivo
+  const roster={}, evaluados={};
+  RAW_DATA.forEach(d=>{
+    (roster[d.supervisor]=roster[d.supervisor]||new Set()).add(d.cedula);
+    if (d.monthKey===mes) (evaluados[d.supervisor]=evaluados[d.supervisor]||new Set()).add(d.cedula);
+  });
+  let sups = Object.keys(roster).sort();
+  if (supSel) sups = sups.filter(s=>s===supSel);
+  const rows = sups.map(s=>{
+    const R=roster[s]||new Set(), E=evaluados[s]||new Set();
+    const pend=[...R].filter(c=>!E.has(c));
+    const nombresPend = pend.map(c=>{ const r=RAW_DATA.find(d=>d.cedula===c); return r?r.colaborador:c; });
+    return {s, total:R.size, eval:E.size, pct:R.size?E.size/R.size*100:0, pend:nombresPend};
+  }).sort((a,b)=>a.pct-b.pct);
+  document.getElementById('cobertura-body').innerHTML = rows.length ? rows.map(r=>{
+    const cls=r.pct>=90?'ok':r.pct>=70?'warn':'bad';
+    return `<tr>
+      <td>${r.s}</td><td class="mono">${r.total}</td><td class="mono">${r.eval}</td>
+      <td><span class="pill ${cls}">${r.pct.toFixed(0)}%</span></td>
+      <td class="mono">${r.pend.length}</td>
+      <td title="${r.pend.join(', ')}" style="max-width:340px;overflow:hidden;text-overflow:ellipsis;color:var(--text-muted);">${r.pend.join(', ')||'—'}</td>
+    </tr>`;
+  }).join('') : '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:20px;">Sin datos.</td></tr>';
 }
 
 /* ---------- Detalle de alertas ---------- */
@@ -872,6 +1097,7 @@ function applyFilters() {
   });
   updateWeekOpts(); updateTags(); updateBanner();
   renderKPIs(FILTERED_DATA); renderAlerts(FILTERED_DATA); renderDataQuality();
+  renderEquipos(); renderCobertura(); renderColaborador360();
   renderReincidencia(FILTERED_DATA); renderAlertsDetail(FILTERED_DATA);
   renderCharts(FILTERED_DATA); renderTable(FILTERED_DATA);
 }
@@ -910,11 +1136,11 @@ function ingest(rows, fuente) {
   const valid=RAW_DATA.filter(d=>d.fechaValida).map(d=>d.fecha).sort((a,b)=>a-b);
   document.getElementById('meta-periodo').textContent = valid.length ? `${fmtDate(valid[0])} — ${fmtDate(valid[valid.length-1])}` : 'Sin fechas válidas';
   document.getElementById('meta-registros').textContent=`${RAW_DATA.length} visitas · ${new Set(RAW_DATA.map(d=>d.cedula)).size} colaboradores`;
-  const flags=(DQ.duplicados||0)+((DQ.sospechosas||[]).length)+(DQ.cedMultiNombre||0);
+  const flags=(DQ.duplicados||0)+((DQ.sospechosas||[]).length)+((DQ.homologacionesCed||[]).length)+((DQ.conflictosNombre||[]).length);
   const mc=document.getElementById('meta-calidad');
   mc.textContent=`⚑ ${flags} avisos de calidad`; mc.className='badge mono '+(flags>0?'warn':''); mc.style.display='inline-block';
 
-  populateFilters(); applyFilters();
+  populateFilters(); populateColabList(); applyFilters();
   document.getElementById('upload-overlay').classList.add('hidden');
   document.getElementById('app').style.display='block';
   return true;
@@ -979,6 +1205,9 @@ document.getElementById('table-search').addEventListener('input',function(){
   const q=this.value.toLowerCase();
   document.querySelectorAll('#table-body tr').forEach(r=>{r.style.display=r.textContent.toLowerCase().includes(q)?'':'none';});
 });
+document.getElementById('colab-search').addEventListener('input',renderColaborador360);
+document.getElementById('colab-search').addEventListener('change',renderColaborador360);
+document.getElementById('equipos-search').addEventListener('input',renderEquipos);
 </script>
 </body>
 </html>
